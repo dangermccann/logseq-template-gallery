@@ -1,0 +1,16 @@
+@import "../node_modules/bootstrap/scss/bootstrap";
+
+.close-button {
+    background-repeat: no-repeat;
+    background-size: 24px 24px;
+    display: inline-block;
+    content: "";
+    vertical-align: -.125em;    
+    height: 24px;
+    width: 24px;
+    background-image: url("../node_modules/bootstrap-icons/icons/x-square.svg");
+}
+
+.close-button:hover {
+    background-image: url("../node_modules/bootstrap-icons/icons/x-square-fill.svg")
+}

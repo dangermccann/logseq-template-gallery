@@ -1,0 +1,35 @@
+{
+    "name": "logseq-templates-gallery",
+    "version": "0.1",
+    "description": "TBD...",
+    "author": "John McCann",
+    "license": "MIT",
+    "scripts": {
+        "dev": "parcel ./index.html",
+        "clean": "rm -rf ./dist/*",
+        "build": "parcel build --public-url . --no-source-maps --no-optimize index.html",
+        "prod": "parcel build --public-url . --no-source-maps index.html",
+        "prebuild": "npx rimraf build"
+    },
+    "devDependencies": {
+        "@logseq/libs": "^0.0.9",
+        "@parcel/transformer-sass": "^2.8.0",
+        "parcel": "^2.0.0"
+    },
+    "dependencies": {
+        "@popperjs/core": "^2.11.6",
+        "bootstrap": "^5.2.3",
+        "bootstrap-icons": "^1.10.2"
+    },
+    "logseq": {
+        "id": "_logseq-templates-gallery",
+        "main": "dist/index.html",
+        "icon": "./logo.png"
+    },
+    "repo": "dangermccann/logseq-templates-gallery",
+    "title": "Templates Gallery",
+    "effect": false,
+    "sponsors": [
+        "https://www.buymeacoffee.com/dangermccaC"
+    ]
+}
