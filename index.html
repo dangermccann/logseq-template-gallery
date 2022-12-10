@@ -13,44 +13,42 @@
 <body>
 
 <div id="app">
-  <div class="container">
+  <div class="container dark-theme">
     <div class="float-end mt-2">
       <a href="#" class="close-button"></a>  
     </div>
     <h2>Gallery Title</h2>
-    
+    <include src="./include.html"></include>
 
-    <div class="row">
-      <div class="col-sm-6 col-md-4">
-        <div class="card mb-4">  
-          <span class="card-img-top" style="height: 12rem; background-color: #ddd;"></span>
+    <div class="row" id="cards">
+
+    </div>
+  </div>
+
+  <div id="hidden-templates">
+    <div id="card-template" class="d-none col-sm-6 col-md-4 hidden">
+      <div class="card mb-4">  
+        <span class="template-content card-img-top"></span>
+        <div class="card-body">
+          <h5 class="card-title">Template Name</h5>
+          <p class="template-description card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua</p>
+          <p class="template-user card-text">Shared by [user name]</p>
+        </div>
           <div class="card-body">
-            <h5 class="card-title">Template Name</h5>
-            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua</p>
-            <p class="card-text">Shared by [user name]</p>
-          </div>
-            <div class="card-body">
-            <button type="button" class="btn btn-outline-dark">
-              <svg class="bi" width="16" height="16" fill="currentColor">
-                <use xlink:href="./node_modules/bootstrap-icons/bootstrap-icons.svg#download"/>
-              </svg>
-              Install
-            </button>
-            <button type="button" class="btn btn-outline-dark">
-              <svg class="bi" width="16" height="16" fill="currentColor">
-                <use xlink:href="./node_modules/bootstrap-icons/bootstrap-icons.svg#heart-fill"/>
-              </svg>
-              Love
-            </button>
-          </div>
+          <button type="button" class="btn btn-outline-dark">
+            <svg class="bi" width="16" height="16" fill="currentColor">
+              <use xlink:href="./node_modules/bootstrap-icons/bootstrap-icons.svg#download"/>
+            </svg>
+            Install
+          </button>
+          <button type="button" class="btn btn-outline-dark">
+            <svg class="bi" width="16" height="16" fill="currentColor">
+              <use xlink:href="./node_modules/bootstrap-icons/bootstrap-icons.svg#heart-fill"/>
+            </svg>
+            Love
+          </button>
         </div>
       </div>
-
-
-      
-     
-
-      
     </div>
   </div>
 </div>

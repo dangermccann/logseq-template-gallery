@@ -1,52 +1,37 @@
-import '@logseq/libs'
-import * as bootstrap from 'bootstrap';
 
-async function main () {
-    console.log("Loading templates gallery...")
-    await loadTemplates()
+var baseUrl = 'http://localhost:3000'
+
+window.onload = function() {
+    reloadTemplates()
 }
 
+async function reloadTemplates() {
+    let templateJson = await getTemplates('new')
+    console.log(templateJson);
 
-async function loadTemplates() {
-    let results = await logseq.DB.datascriptQuery(`
-    [:find (pull ?b [*])
-      :where
-      [?b :block/page ?p]
-      [?b :block/properties ?prop]
-      [(get ?prop :template)]
-    ]`)        
+    let cardTemplate = document.getElementById('card-template')
+    let cards = document.getElementById('cards')
 
-    if(!results) {
-        console.log("No templates found")
-        return []
-    } 
-
-
-    for(var i = 0; i < results.length; i++) {
-        let result = results[i][0];
-        let name = result.properties['template']
-        let uuid = result.uuid
-
-        let parentBlock = await logseq.Editor.getBlock(uuid, { includeChildren: true })
-        console.log(printTree(parentBlock, 0))
-    }
-
-    return results;
-}
-
-function printTree(block, level) {
-    let str = ""
-    for(var i = 0; i < level; i++) { 
-        str += "  " 
-    }
-
-    str += block.content + "\n";
-    block.children.forEach((child) => {
-        str += printTree(child, level+1)
+    templateJson.forEach((template) => {
+        let cloned = cardTemplate.cloneNode(true)
+        cards.appendChild(cloned)
+        cloned.querySelector('h5.card-title').innerText = template.Template
+        cloned.querySelector('p.template-user').innerText = `Shared by ${template.User}`
+        cloned.querySelector('span.template-content').innerHTML = formatTemplateContent(template.Content)
+        cloned.classList.remove('d-none')
     })
-    return str
 }
 
+async function getTemplates(which, filter) {
+    let url = `${baseUrl}/templates?${which}=1`
+    if(filter) 
+        url += `&filter=${filter}`
+    
+    let response = await fetch(url)
+    return response.json()
+}
 
-// bootstrap
-logseq.ready(main).catch(console.error)
+function formatTemplateContent(content) {
+    return content
+}
+
