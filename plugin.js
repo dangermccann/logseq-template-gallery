@@ -1,8 +1,25 @@
 import '@logseq/libs'
 import * as bootstrap from 'bootstrap';
 
-async function main () {
+function createModel () {
+    return {
+        openGallery() {
+        logseq.showMainUI()
+        reloadTemplates()
+        let app = document.getElementById("app")
+        if(app) {
+            console.log("found app")
+            app.style.visibility = "visible"
+        }
+      },
+    }
+  }
+  
+
+async function main() {
     console.log("Loading templates gallery...")
+    registerHooks()
+
     await loadTemplates()
 }
 
@@ -48,5 +65,39 @@ function printTree(block, level) {
 }
 
 
+function registerHooks() {
+    logseq.App.registerUIItem("toolbar", {
+        key: "TemplateGallery", 
+        template: `
+            <a class="button" data-on-click="openGallery">
+                <img src="${getIconPath()}" style="height: 20px" />
+            </a>
+        `,
+    })
+
+    document.getElementById("close-button").addEventListener('mousedown', () => {
+        document.getElementById("app").style.visibility = "hidden"
+        logseq.hideMainUI({restoreEditingCursor: true})
+    })
+
+    logseq.Editor.registerBlockContextMenuItem("Share Template", (block) => {
+        console.log(`Sharing template ${block.uuid}`)
+    })
+
+}
+
+
+function getIconPath() {
+    let filename = require('./toolbar-icon.png');
+    return getPluginDir() + filename.substr(filename.lastIndexOf("/"))
+}
+
+function getPluginDir() {
+    const iframe = parent?.document?.getElementById(`${logseq.baseInfo.id}_iframe`,)
+    const pluginSrc = iframe.src
+    const index = pluginSrc.lastIndexOf("/")
+    return pluginSrc.substring(0, index)
+}
+
 // bootstrap
-logseq.ready(main).catch(console.error)
+logseq.ready(createModel()).then(main).catch(console.error)

@@ -8,8 +8,7 @@
         "dev": "parcel ./index.html",
         "clean": "rm -rf ./dist/*",
         "build": "parcel build --public-url . --no-source-maps --no-optimize index.html",
-        "prod": "parcel build --public-url . --no-source-maps index.html",
-        "prebuild": "npx rimraf build"
+        "prod": "parcel build --public-url . --no-source-maps index.html"
     },
     "devDependencies": {
         "@logseq/libs": "^0.0.9",

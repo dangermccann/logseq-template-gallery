@@ -10,23 +10,111 @@
   <link rel="stylesheet" href="./scss/custom.scss">  
 
 </head>
-<body>
+<body class="vh-100 vw-100">
 
-<div id="app">
+<div id="app" class="root hidden relative">
   <div class="container dark-theme">
-    <div class="float-end mt-2">
-      <a href="#" class="close-button"></a>  
+    <div class="float-end mt-3">
+      <button id="close-button" type="button" class="btn btn-outline-light">
+        <span class="inline-icon x-icon"></span>
+      </button>  
     </div>
-    <h2>Gallery Title</h2>
-    <include src="./include.html"></include>
 
-    <div class="row" id="cards">
+    <h2 class="centered-element">
+      <img src="logo-circle.png" height="80" /> 
+      <span class="align-middle">Logseq Template Gallery</span>
+    </h2>
+    <!--include src="./include.html"></include-->
 
+    <div class="mt-2 mb-4 row">
+      <div class="btn-group me-1 col-auto" role="group">
+        <input type="radio" class="btn-check btn-custom" name="view-radio" id="popular-radio"value="popular" autocomplete="off" checked>
+        <label class="btn btn-outline-primary btn-outline-light" for="popular-radio">
+          <span class="inline-icon popular-icon"></span>
+          Most Popular
+        </label>
+
+        <input type="radio" class="btn-check btn-custom" name="view-radio" id="latest-radio" value="new" autocomplete="off">
+        <label class="btn btn-outline-primary btn-outline-light" for="latest-radio">
+          <span class="inline-icon latest-icon"></span>
+          Latest
+        </label>
+      
+        <input type="radio" class="btn-check btn-custom" name="view-radio" id="my-templates" value="my" autocomplete="off">
+        <label class="btn btn-outline-primary btn-outline-light" for="my-templates">
+          <span class="inline-icon my-icon"></span>
+          My Templates
+        </label>
+      </div>
+
+      <div class="col-auto me-5 d-sm-none d-md-block">
+        <input id="filter" class="form-control" type="text" placeholder="Filter" aria-label="Filter results">
+      </div>
+
+      <div class="col-auto d-sm-none d-md-block">
+        <button id="share-template-button" type="button" class="btn btn-outline-primary btn-outline-light">
+          <span class="inline-icon share-icon"></span>
+          Share a Template
+        </button>
+      </div>
+    </div>
+
+    <div class="row cards" id="cards"></div>
+    <div class="row d-none" id="new-user">
+      <h3>It looks like you're new here</h3>
+      <p>Please register a user name to identify yourself in the community, and then you can begin sharing templates with others.  Once you are registered the templates you have previously shared will appear here.</p>
+    </div>
+  </div>
+
+  <!-- Preview overlay -->
+  <div id="template-preview-overlay" class="absolute d-none overlay">
+    <div class="container dark-theme">
+      <div class="card mb-4">  
+        <div class="card-body">
+          <h5 class="card-title">Template Name</h5>
+        </div>
+        <span class="template-content">Content goes here</span>
+        <div class="card-body">
+          <button id="preview-overlay-close" type="button" class="btn btn-outline-dark">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User name selection overlay -->
+  <div id="template-login-overlay" class="absolute d-none overlay">
+    <div class="container dark-theme">
+      <div class="card mb-4">  
+        <div class="card-body">
+          <h4 class="card-title">Register a User Name</h4>
+        </div>
+        <div class="card-body">
+          <h5>To share contnet in the Template Gallery, you will need to select a user name that will identify you in the community.</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-auto"><input id="username" class="form-control" type="text" placeholder="User name" aria-label="Your chosen user name"></div>
+            <div class="col-auto"><button id="username-submit" type="button" class="btn btn-primary">Submit</button></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <p>
+            Logseq Template Gallery is a privacy-first experience.  As such, we will not ask for your email address or any personal information.  
+            We operate on the <b>honor system</b>, and we kindly ask that you choose a user name that is unique to you, and moreover, that you not attempt to 
+            impersonate another user.  We will not attempt to verify your identity, so this honor system is crucial to the success of the community.  
+            Thank you for your cooperation.  
+          </p>
+        </div>
+        <div class="card-body">
+          <button id="login-overlay-close" type="button" class="btn btn-outline-dark float-end">Cancel</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <div id="hidden-templates">
-    <div id="card-template" class="d-none col-sm-6 col-md-4 hidden">
+    <!-- Card template -->
+    <div id="card-template" class="d-none col-sm-6 col-md-4">
       <div class="card mb-4">  
         <span class="template-content card-img-top"></span>
         <div class="card-body">
@@ -36,20 +124,18 @@
         </div>
         <div class="card-body">
           <button type="button" class="btn btn-outline-dark">
-            <svg class="bi" width="16" height="16" fill="currentColor">
-              <use xlink:href="./node_modules/bootstrap-icons/bootstrap-icons.svg#download"/>
-            </svg>
+            <span class="inline-icon download-icon"></span>
             Install
           </button>
           <button type="button" class="btn btn-outline-dark">
-            <svg class="bi" width="16" height="16" fill="currentColor">
-              <use xlink:href="./node_modules/bootstrap-icons/bootstrap-icons.svg#heart-fill"/>
-            </svg>
+            <span class="inline-icon heart-icon"></span>
             Love
           </button>
         </div>
       </div>
     </div>
+
+    <div id="error-template" class="d-none col-sm-6 col-md-4"></div>
   </div>
 </div>
 

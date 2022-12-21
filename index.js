@@ -1,3 +1,5 @@
+import '@logseq/libs'
+import * as bootstrap from 'bootstrap';
 
 const baseUrl = 'http://localhost:3000'
 
@@ -14,24 +16,62 @@ const testTemplate = `{
 
 
 window.onload = function() {
-    reloadTemplates()
+    console.log("Template Gallery plugin page load")
 }
 
-async function reloadTemplates() {
-    let templateJson = await getTemplates('new')
-    console.log(templateJson);
-
+async function loadRemoteTemplates(which, filter) {
     let cardTemplate = document.getElementById('card-template')
     let cards = document.getElementById('cards')
+    cards.replaceChildren()
 
+    cards.innerHTML = '<span class="text-center mb-5">Loading...</span>'
+
+
+    var templateJson;
+    try {
+        templateJson = await getTemplates(which, filter)
+    }
+    catch(er) {
+        showError(`Failed to load data from server<br/>${er.toString()}`)
+        return
+    }
+    
+    //console.log(templateJson);
+
+    cards.replaceChildren()
+
+    let index = 0;
     templateJson.forEach((template) => {
         let cloned = cardTemplate.cloneNode(true)
         cards.appendChild(cloned)
+        cloned.id = `template-${index}`
         cloned.querySelector('h5.card-title').innerText = template.Template
         cloned.querySelector('p.template-user').innerText = `Shared by ${template.User}`
-        insertTemplateContent(cloned.querySelector('span.template-content'), testTemplate /*template.Content*/)
+        
+        let content = cloned.querySelector('span.template-content')
+        insertTemplateContent(content, testTemplate /*template.Content*/)
+        content.addEventListener('mousedown', () => {
+            let overlay = document.getElementById('template-preview-overlay')
+            overlay.querySelector('.template-content').innerHTML = content.innerHTML
+            overlay.querySelector('.card-title').innerHTML = template.Template
+            openOverlay('template-preview-overlay')
+        })
+        
         cloned.classList.remove('d-none')
+        index++
     })
+}
+
+function showError(msg) {
+    let errorTemplate = document.getElementById('error-template')
+    let cards = document.getElementById('cards')
+    cards.replaceChildren()
+
+    let cloned = errorTemplate.cloneNode(true)
+    cloned.id = 'error-message'
+    cloned.classList.remove('d-none')
+    cloned.innerHTML = msg
+    cards.appendChild(cloned)
 }
 
 async function getTemplates(which, filter) {
@@ -44,7 +84,13 @@ async function getTemplates(which, filter) {
 }
 
 function insertTemplateContent(container, content) {
-    let parsed = JSON.parse(content)
+    var parsed;
+    try {
+        parsed = JSON.parse(content)
+    }
+    catch(e) {
+        parsed = { "blocks": [ { "level": 0, "content": "INVALID JSON" } ] }
+    }
 
     var el;
     parsed.blocks.forEach(block => {
@@ -160,3 +206,147 @@ function formatTODOs(line) {
     return line
 }
 
+
+function createModel () {
+    return {
+        async openGallery() {
+            logseq.showMainUI()
+            await loadLocalTemplates()
+            loadRemoteTemplates('popular')
+            let app = document.getElementById("app")
+            if(app) {
+                console.log("found app")
+                app.classList.remove("hidden")
+                app.classList.add("visible")
+            }
+      },
+    }
+  }
+  
+
+async function main() {
+    console.log("Loading templates gallery...")
+    registerHooks()
+}
+
+
+async function loadLocalTemplates() {
+    let results = await logseq.DB.datascriptQuery(`
+    [:find (pull ?b [*])
+      :where
+      [?b :block/page ?p]
+      [?b :block/properties ?prop]
+      [(get ?prop :template)]
+    ]`)        
+
+    if(!results) {
+        console.log("No templates found")
+        return []
+    } 
+
+
+    for(var i = 0; i < results.length; i++) {
+        let result = results[i][0];
+        let name = result.properties['template']
+        let uuid = result.uuid
+
+        let parentBlock = await logseq.Editor.getBlock(uuid, { includeChildren: true })
+        console.log(printTree(parentBlock, 0))
+    }
+
+    return results;
+}
+
+function printTree(block, level) {
+    let str = ""
+    for(var i = 0; i < level; i++) { 
+        str += "  " 
+    }
+
+    str += block.content + "\n";
+    block.children.forEach((child) => {
+        str += printTree(child, level+1)
+    })
+    return str
+}
+
+function close() {
+    var app = document.getElementById("app")
+    app.classList.remove("visible")
+    app.classList.add("hidden")
+    setTimeout(() => { 
+        logseq.hideMainUI({restoreEditingCursor: true}) 
+    }, 250)
+}
+
+function openOverlay(id) {
+    var div = document.getElementById(id)
+    div.classList.remove("d-none")
+} 
+
+function closeOverlay(id) {
+    var div = document.getElementById(id)
+    div.classList.add("d-none")
+}
+
+
+function registerHooks() {
+    logseq.App.registerUIItem("toolbar", {
+        key: "TemplateGallery", 
+        template: `
+            <a class="button" data-on-click="openGallery">
+                <img src="${getIconPath()}" style="height: 20px" />
+            </a>
+        `,
+    })
+
+    document.getElementById("close-button").addEventListener('mousedown', () => {
+        close()
+    })
+
+    document.getElementById("share-template-button").addEventListener('mousedown', () => {
+        openOverlay('template-login-overlay')
+    })
+
+    document.getElementById("preview-overlay-close").addEventListener('mousedown', () => {
+        closeOverlay('template-preview-overlay')
+    })
+
+    document.getElementById("login-overlay-close").addEventListener('mousedown', () => {
+        closeOverlay('template-login-overlay')
+    })
+
+    const viewButtons = document.querySelectorAll('input[name="view-radio"]');
+    for(const button of viewButtons){
+        button.addEventListener('change', (e) => {
+            if(e.target.checked) {
+                let val = e.target.value
+                if(val === 'popular' || val === 'new')
+                    loadRemoteTemplates(val)
+                else
+                    console.log('TOOD: implement my templates!')
+            }
+        });
+    } 
+
+    logseq.Editor.registerBlockContextMenuItem("Share Template", (block) => {
+        console.log(`Sharing template ${block.uuid}`)
+    })
+
+}
+
+
+function getIconPath() {
+    let filename = require('./toolbar-icon.png');
+    return getPluginDir() + filename.substr(filename.lastIndexOf("/"))
+}
+
+function getPluginDir() {
+    const iframe = parent?.document?.getElementById(`${logseq.baseInfo.id}_iframe`,)
+    const pluginSrc = iframe.src
+    const index = pluginSrc.lastIndexOf("/")
+    return pluginSrc.substring(0, index)
+}
+
+// bootstrap
+logseq.ready(createModel()).then(main).catch(console.error)

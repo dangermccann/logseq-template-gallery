@@ -1,6 +1,16 @@
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 
+@font-face {
+    font-family: 'JosefinSans';
+    src: url('../fonts/JosefinSans-VariableFont_wght.ttf');
+  }
+
+  body {
+    font-family: JosefinSans;
+  }
+
+
 .dark-theme {
     --ls-primary-background-color:#002b36;
     --ls-secondary-background-color:rgb(2, 54, 67);
@@ -51,25 +61,37 @@
     --color-level-6:#3a7e8e
 }
 
-.close-button {
-    color: #FFF;
-    background-repeat: no-repeat;
-    background-size: 24px 24px;
-    display: inline-block;
-    content: "";
-    vertical-align: -.125em;    
-    height: 24px;
-    width: 24px;
-    background-image: url("../node_modules/bootstrap-icons/icons/x-square.svg");
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0.25);
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
-.close-button:hover {
-    background-image: url("../node_modules/bootstrap-icons/icons/x-square-fill.svg");
-}
-
-body {
+.root {
     background-color: #2A3D45;
     color: #fff;
+    margin: 60px;
+    border: 1px solid #6d7f87;
+    border-radius: 4px;
+    visibility: hidden;
+}
+
+.inline-icon {
+    height: 20px;
+    width: 20px;
+    background-size: 20px 20px;
+    background-color: #DDC9B4;
+    display: inline-block;
+    vertical-align: -0.3em;
+    margin-right: 0.1em;
+    mask-size: cover;
+    -webkit-mask-size: cover;
+}
+
+.cards {
+    min-height: 500px;
 }
 
 .card {
@@ -85,10 +107,139 @@ body {
     color: #2A3D45;
     border-color: #2A3D45;
 }
- h2 {
+
+.btn-outline-dark:hover {
     color: #E6E1DC;
+}
+
+
+.btn-outline-dark .inline-icon {
+    background-color: #2A3D45;
+}
+
+.btn-outline-dark:hover .inline-icon {
+    background-color: #E6E1DC;
+}
+
+ h2 {
+    color: #E6E1DC !important;
+    text-shadow: 2px 2px black;
+    font-size: 2.4rem;
  }
 
+.overlay {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.75);
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.overlay .container {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0;
+    left: 0;
+}
+
+.overlay .card {
+    border: 3px solid #DDC9B4;
+    border-radius: 4px;
+}
+
+.visible {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.25s linear;
+}
+
+.hidden {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 0.25s, opacity 0.25s linear;
+}
+
+.btn-outline-light {
+    border-color: #DDC9B4 !important;
+    color: #DDC9B4 !important;
+}
+
+.btn-outline-light:hover {
+    background-color: #ddcdbb !important;
+    color: #2A3D45 !important;
+    border-color: #DDC9B4 !important;
+}
+
+.btn-check:checked + .btn {
+    background-color: #DDC9B4 !important;
+    color: #2A3D45 !important;
+    border-color: #DDC9B4 !important;
+}
+
+.btn-primary {
+    background-color: #2A3D45;
+    border-color: #6d7f87;
+}
+
+.btn-primary:hover {
+    background-color: #43606d;
+}
+
+#filter {
+    background-color: #2a3d45;
+    color: #e5e1dc;
+}
+
+.btn-outline-light:hover .inline-icon {
+    background-color: #2A3D45;
+}
+
+.btn-check:checked + .btn .inline-icon {
+    background-color: #2A3D45;
+}
+
+.popular-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/heart.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/heart.svg");
+}
+
+.latest-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/newspaper.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/newspaper.svg");
+}
+
+.my-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/person.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/person.svg");
+}
+
+.share-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/cloud-upload.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/cloud-upload.svg");
+}
+
+.download-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/download.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/download.svg");
+}
+
+.heart-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/heart.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/heart.svg");
+}
+
+.heart-fill-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/heart-fill.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/heart-fill.svg");
+}
+
+.x-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/x-lg.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/x-lg.svg");
+}
 
 
  .template-content {
@@ -97,6 +248,11 @@ body {
     color: var(--ls-primary-text-color);
     padding: 10px;
     overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.overlay .template-content {
+    height: auto !important;
 }
 
  .circle {
@@ -108,6 +264,10 @@ body {
 .block-properties {
     padding: 6px 20px;
     background-color: var(--ls-block-properties-background-color);
+}
+
+.cards .template-content {
+    cursor: pointer;
 }
 
 .template-content .link {
