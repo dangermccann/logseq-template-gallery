@@ -211,6 +211,7 @@ function createModel () {
     return {
         async openGallery() {
             logseq.showMainUI()
+            refreshUsernameMessage(logseq.settings['username'])
             await loadLocalTemplates()
             loadRemoteTemplates('popular')
             let app = document.getElementById("app")
@@ -289,6 +290,17 @@ function closeOverlay(id) {
     div.classList.add("d-none")
 }
 
+function refreshUsernameMessage(username) {
+    document.getElementById('username').value = username || ''
+    if(username) {
+        document.getElementById('username-link').innerText = username
+        document.getElementById('username-welcome').classList.remove('d-none')
+    }
+    else {
+        document.getElementById('username-welcome').classList.add('d-none')
+    }
+}
+
 
 function registerHooks() {
     logseq.App.registerUIItem("toolbar", {
@@ -300,20 +312,37 @@ function registerHooks() {
         `,
     })
 
-    document.getElementById("close-button").addEventListener('mousedown', () => {
+    document.getElementById("close-button").addEventListener('click', () => {
         close()
     })
 
-    document.getElementById("share-template-button").addEventListener('mousedown', () => {
+    document.getElementById("share-template-button").addEventListener('click', () => {
         openOverlay('template-login-overlay')
     })
 
-    document.getElementById("preview-overlay-close").addEventListener('mousedown', () => {
+    document.getElementById("username-link").addEventListener('click', () => {
+        openOverlay('template-login-overlay')
+    })
+
+    document.getElementById("preview-overlay-close").addEventListener('click', () => {
         closeOverlay('template-preview-overlay')
     })
 
-    document.getElementById("login-overlay-close").addEventListener('mousedown', () => {
+    document.getElementById("login-overlay-close").addEventListener('click', () => {
         closeOverlay('template-login-overlay')
+    })
+
+    document.getElementById("username-submit").addEventListener('click', () => {
+        let username = document.getElementById('username').value
+        closeOverlay('template-login-overlay')
+        if(username.length > 0) {
+            logseq.updateSettings({ 'username': username })
+            refreshUsernameMessage(username)
+        }
+        else {
+            logseq.updateSettings( { 'username': null })
+            refreshUsernameMessage(null)
+        }
     })
 
     const viewButtons = document.querySelectorAll('input[name="view-radio"]');

@@ -125,7 +125,20 @@ html, body {
     color: #E6E1DC !important;
     text-shadow: 2px 2px black;
     font-size: 2.4rem;
- }
+}
+
+h4 {
+    color: #E6E1DC !important;
+}
+
+h4 a {
+    color: #DDC9B4;
+    text-decoration: none;
+}
+
+h4 a:hover {
+    color: #DDC9B4;
+}
 
 .overlay {
     position: absolute;
@@ -135,6 +148,10 @@ html, body {
     left: 0;
     right: 0;
     z-index: 10;
+}
+
+.overlay h4 {
+    color: #7A6C5D;
 }
 
 .overlay .container {
