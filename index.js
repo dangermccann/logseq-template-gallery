@@ -1,22 +1,34 @@
 import '@logseq/libs'
+import { Card } from './card'
+import { Api } from './api'
 import * as bootstrap from 'bootstrap';
 
 const baseUrl = 'http://localhost:3000'
+const api = new Api(baseUrl)
+let userLoves = {}
 
-const testTemplate = `{ 
-    "blocks": [
-        { "level": 0, "content": "**This is** the [[first]] line\\nprop:: value\\nprop2:: value2" },
-        { "level": 0, "content": "This #block _has only one_ [line](http://google.com)" },
-        { "level": 1, "content": "This #[[block]] is a [[child]] of the ^^one above^^" },
-        { "level": 1, "content": "TODO This \`block\` is #another child" },
-        { "level": 2, "content": "This block is Level 2" },
-        { "level": 2, "content": "This block is Level 2 and has a property\\nsomething:: or other\\nBelow!" }
-    ]
-}`
+window.onload = function() {  }
 
+function createModel() {
+    return {
+        async openGallery() {
+            logseq.showMainUI()
 
-window.onload = function() {
-    console.log("Template Gallery plugin page load")
+            refreshUsernameMessage(logseq.settings['username'])
+            await loadLocalTemplates()
+            await loadUserLoves(logseq.settings['username'])
+            loadRemoteTemplates('popular')
+
+            let app = document.getElementById("app")
+            app.classList.remove("hidden")
+            app.classList.add("visible")
+        },
+    }
+}
+  
+async function main() {
+    console.log("Loading templates gallery...")
+    registerHooks()
 }
 
 async function loadRemoteTemplates(which, filter) {
@@ -29,7 +41,7 @@ async function loadRemoteTemplates(which, filter) {
 
     var templateJson;
     try {
-        templateJson = await getTemplates(which, filter)
+        templateJson = await api.getTemplates(which, filter)
     }
     catch(er) {
         showError(`Failed to load data from server<br/>${er.toString()}`)
@@ -42,194 +54,54 @@ async function loadRemoteTemplates(which, filter) {
 
     let index = 0;
     templateJson.forEach((template) => {
-        let cloned = cardTemplate.cloneNode(true)
-        cards.appendChild(cloned)
-        cloned.id = `template-${index}`
-        cloned.querySelector('h5.card-title').innerText = template.Template
-        cloned.querySelector('p.template-user').innerText = `Shared by ${template.User}`
-        
-        let content = cloned.querySelector('span.template-content')
-        insertTemplateContent(content, testTemplate /*template.Content*/)
-        content.addEventListener('mousedown', () => {
+        let card = new Card(cardTemplate, cards)
+        card.render(template, index)
+
+        if(doesUserLove(template))
+            card.setLoved(true)
+
+        card.addContentClickListener(() => {
             let overlay = document.getElementById('template-preview-overlay')
-            overlay.querySelector('.template-content').innerHTML = content.innerHTML
+            overlay.querySelector('.template-content').innerHTML = card.content.innerHTML
             overlay.querySelector('.card-title').innerHTML = template.Template
             openOverlay('template-preview-overlay')
         })
-        
-        cloned.classList.remove('d-none')
+
+        card.addLoveClickListener(() => {
+            if(doesUserLove(template)) {
+                card.setLoved(false)
+                delete userLoves[`${template.User}\n${template.Template}`]
+
+                api.deleteUserLove(logseq.settings['username'], template.User, template.Template)
+                api.templatePopularity(template.User, template.Template, -10)
+            }
+            else {
+                card.setLoved(true)
+                userLoves[`${template.User}\n${template.Template}`] = true
+
+                api.putUserLove(logseq.settings['username'], template.User, template.Template)
+                api.templatePopularity(template.User, template.Template, 10)
+            }
+        })
         index++
     })
 }
 
-function showError(msg) {
-    let errorTemplate = document.getElementById('error-template')
-    let cards = document.getElementById('cards')
-    cards.replaceChildren()
-
-    let cloned = errorTemplate.cloneNode(true)
-    cloned.id = 'error-message'
-    cloned.classList.remove('d-none')
-    cloned.innerHTML = msg
-    cards.appendChild(cloned)
-}
-
-async function getTemplates(which, filter) {
-    let url = `${baseUrl}/templates?${which}=1`
-    if(filter) 
-        url += `&filter=${filter}`
-    
-    let response = await fetch(url)
-    return response.json()
-}
-
-function insertTemplateContent(container, content) {
-    var parsed;
-    try {
-        parsed = JSON.parse(content)
-    }
-    catch(e) {
-        parsed = { "blocks": [ { "level": 0, "content": "INVALID JSON" } ] }
-    }
-
-    var el;
-    parsed.blocks.forEach(block => {
-        let row = document.createElement('span')
-        container.appendChild(row)
-        row.classList.add('d-flex')
-        row.classList.add('flex-row')
-        row.classList.add('mb-1')
-
-        // Insert spacers
-        for(var i = 0; i < block.level; i++) {
-            el = document.createElement('div')
-            el.classList.add('m-2')
-            row.appendChild(el)
-        }
-
-        // Insert bullet
-        el = document.createElement('ul')
-        el.classList.add('circle')
-        el.classList.add('mb-0')
-        el.appendChild(document.createElement('li'))
-        row.appendChild(el)
-
-        // Container for lines
-        let linesEl = document.createElement('div')
-        row.appendChild(linesEl)
-
-
-        let lines = block.content.split('\n')
-
-        const propRegEx = /[A-Za-z0-9]+\:\:/
-
-        // Extract properties
-        let properties = []
-        for(var i = lines.length - 1; i >= 0; i--) {
-            if(lines[i].match(propRegEx)) {
-                properties.push(lines[i])
-                lines.splice(i, 1)
-            }
-        }
-        
-        // Render first line
-        renderLine(linesEl, lines[0])
-        lines.splice(0, 1)
-
-        // Render properties
-        if(properties.length > 0) {
-            let propsEl = document.createElement('div')
-            propsEl.classList.add('block-properties')
-            linesEl.appendChild(propsEl)
-            properties.forEach(prop => {
-                let parts = prop.split("::")
-                renderProperty(propsEl, parts)
-            })
-        }
-        
-
-        // Render remaining lines
-        lines.forEach(line => {
-            renderLine(linesEl, line)
+async function loadUserLoves(user) {
+    if(user) {
+        let loves = await api.getUserLoves()
+        loves.forEach((love) => {
+            userLoves[love.LovedTemplate] = true
         })
-        
-    })
-}
-
-function renderLine(parent, line) {
-    let p = document.createElement('p')
-    p.classList.add('mb-0')
-
-    line = formatLinks(line)
-    line = formatMarkdown(line)
-    line = formatTODOs(line)
-
-    p.innerHTML = line
-    parent.appendChild(p)
-}
-
-function renderProperty(parent, parts) {
-    let p = document.createElement('p')
-    p.classList.add('mb-0')
-
-    var line = `<span class="property-name">${parts[0]}</span><span class="separator">:</span>`
-    line += formatLinks(parts[0])
-    p.innerHTML = line
-
-    parent.appendChild(p)
-}
-
-function formatLinks(line) {
-    line = line.replaceAll(/\#([^\s]+)/g, '<span class="tag">#$1</span>')
-    line = line.replaceAll(/\[\[(.*?)\]\]/g, '<span class="bracket">[[</span><span class="link">$1</span><span class="bracket">]]</span>')
-    line = line.replaceAll(/\[(.*?)\]\([^\s]+\)/g, '<span class="external-link">$1</span>')
-    return line
-}
-
-function formatMarkdown(line) {
-    line = line.replaceAll(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-    line = line.replaceAll(/\_(.*?)\_/g, '<i>$1</i>')
-    line = line.replaceAll(/\~\~(.*?)\~\~/g, '<span class="strikethrough">$1</span>')
-    line = line.replaceAll(/\^\^(.*?)\^\^/g, '<span class="highlight">$1</span>')
-    line = line.replaceAll(/\`(.*?)\`/g, '<span class="code">$1</span>')
-    return line
-}
-
-
-function formatTODOs(line) {
-    const checkbox = '<input type="checkbox" disabled />'
-    line = line.replaceAll(/\bNOW\b/g, checkbox)
-    line = line.replaceAll(/\bLATER\b/g, checkbox)
-    line = line.replaceAll(/\bDOING\b/g, checkbox)
-    line = line.replaceAll(/\bTODO\b/g, checkbox)
-    line = line.replaceAll(/\bDONE\b/g, checkbox)
-    return line
-}
-
-
-function createModel () {
-    return {
-        async openGallery() {
-            logseq.showMainUI()
-            refreshUsernameMessage(logseq.settings['username'])
-            await loadLocalTemplates()
-            loadRemoteTemplates('popular')
-            let app = document.getElementById("app")
-            if(app) {
-                console.log("found app")
-                app.classList.remove("hidden")
-                app.classList.add("visible")
-            }
-      },
     }
-  }
-  
-
-async function main() {
-    console.log("Loading templates gallery...")
-    registerHooks()
+    else {
+        userLoves = {}
+    }
 }
 
+function doesUserLove(template) {
+    return (`${template.User}\n${template.Template}`) in userLoves
+}
 
 async function loadLocalTemplates() {
     let results = await logseq.DB.datascriptQuery(`
@@ -252,7 +124,7 @@ async function loadLocalTemplates() {
         let uuid = result.uuid
 
         let parentBlock = await logseq.Editor.getBlock(uuid, { includeChildren: true })
-        console.log(printTree(parentBlock, 0))
+        //console.log(printTree(parentBlock, 0))
     }
 
     return results;
@@ -269,6 +141,19 @@ function printTree(block, level) {
         str += printTree(child, level+1)
     })
     return str
+}
+
+
+function showError(msg) {
+    let errorTemplate = document.getElementById('error-template')
+    let cards = document.getElementById('cards')
+    cards.replaceChildren()
+
+    let cloned = errorTemplate.cloneNode(true)
+    cloned.id = 'error-message'
+    cloned.classList.remove('d-none')
+    cloned.innerHTML = msg
+    cards.appendChild(cloned)
 }
 
 function close() {
@@ -300,7 +185,6 @@ function refreshUsernameMessage(username) {
         document.getElementById('username-welcome').classList.add('d-none')
     }
 }
-
 
 function registerHooks() {
     logseq.App.registerUIItem("toolbar", {
@@ -366,7 +250,7 @@ function registerHooks() {
 
 
 function getIconPath() {
-    let filename = require('./toolbar-icon.png');
+    let filename = require('./images/toolbar-icon.png');
     return getPluginDir() + filename.substr(filename.lastIndexOf("/"))
 }
 
