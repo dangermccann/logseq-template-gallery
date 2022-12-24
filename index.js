@@ -6,6 +6,7 @@ import * as bootstrap from 'bootstrap';
 const baseUrl = 'http://localhost:3000'
 const api = new Api(baseUrl)
 let userLoves = {}
+let stack = []
 
 window.onload = function() {  }
 
@@ -19,9 +20,13 @@ function createModel() {
             await loadUserLoves(logseq.settings['username'])
             loadRemoteTemplates('popular')
 
+            // fade in background
             let app = document.getElementById("app")
             app.classList.remove("hidden")
             app.classList.add("visible")
+
+            // show main UI
+            openOverlay('main')
         },
     }
 }
@@ -162,17 +167,36 @@ function close() {
     app.classList.add("hidden")
     setTimeout(() => { 
         logseq.hideMainUI({restoreEditingCursor: true}) 
+        stack = []
     }, 250)
 }
 
 function openOverlay(id) {
     var div = document.getElementById(id)
     div.classList.remove("d-none")
+    stack.push(id)
 } 
 
 function closeOverlay(id) {
+    var top = stack[stack.length-1];
+    if(top != id) {
+        console.log(`Invalid stack: popping ${id} but top is ${top}`)
+    }
+    else {
+        stack.pop()
+    }
     var div = document.getElementById(id)
     div.classList.add("d-none")
+}
+
+function popStack() {
+    if(stack.length > 0) {
+        closeOverlay(stack[stack.length - 1])
+    }
+
+    if(stack.length === 0) {
+        close()
+    }
 }
 
 function refreshUsernameMessage(username) {
@@ -194,6 +218,12 @@ function registerHooks() {
                 <img src="${getIconPath()}" style="height: 20px" />
             </a>
         `,
+    })
+
+    document.addEventListener('keyup', (e) => {
+        if(e.key == 'Escape') {
+            popStack()
+        }
     })
 
     document.getElementById("close-button").addEventListener('click', () => {
