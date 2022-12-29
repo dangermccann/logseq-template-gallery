@@ -7,23 +7,19 @@ const baseUrl = 'http://localhost:3000'
 const api = new Api(baseUrl)
 let userLoves = {}
 let stack = []
+let blocks = []
 
 window.onload = function() {  }
 
 function createModel() {
     return {
         async openGallery() {
-            logseq.showMainUI()
+            show()
 
             refreshUsernameMessage(logseq.settings['username'])
             await loadLocalTemplates()
             await loadUserLoves(logseq.settings['username'])
             loadRemoteTemplates('popular')
-
-            // fade in background
-            let app = document.getElementById("app")
-            app.classList.remove("hidden")
-            app.classList.add("visible")
 
             // show main UI
             openOverlay('main')
@@ -161,13 +157,22 @@ function showError(msg) {
     cards.appendChild(cloned)
 }
 
-function close() {
+function show() {
+    logseq.showMainUI()
+
+    let app = document.getElementById("app")
+    app.classList.remove("hidden")
+    app.classList.add("visible")
+}
+
+function close(cb) {
     var app = document.getElementById("app")
     app.classList.remove("visible")
     app.classList.add("hidden")
     setTimeout(() => { 
         logseq.hideMainUI({restoreEditingCursor: true}) 
         stack = []
+        cb()
     }, 250)
 }
 
@@ -186,16 +191,20 @@ function closeOverlay(id) {
         stack.pop()
     }
     var div = document.getElementById(id)
-    div.classList.add("d-none")
+
+    if(stack.length === 0) {
+        close(() => {
+            div.classList.add("d-none")
+        })
+    }
+    else {
+        div.classList.add("d-none")
+    }
 }
 
 function popStack() {
     if(stack.length > 0) {
         closeOverlay(stack[stack.length - 1])
-    }
-
-    if(stack.length === 0) {
-        close()
     }
 }
 
@@ -227,7 +236,7 @@ function registerHooks() {
     })
 
     document.getElementById("close-button").addEventListener('click', () => {
-        close()
+        closeOverlay('main')
     })
 
     document.getElementById("share-template-button").addEventListener('click', () => {
@@ -246,6 +255,29 @@ function registerHooks() {
         closeOverlay('template-login-overlay')
     })
 
+    document.getElementById("share-overlay-share").addEventListener('click', async () => {
+        let tempName = document.getElementById('share-template-name').value
+        if(tempName.length === 0) {
+            return
+        }
+
+        let tempDesc = document.getElementById('share-template-description').value
+        if(tempDesc.length === 0) {
+            return
+        }
+
+        await api.putTemplate(logseq.settings['username'], 
+            tempName, tempDesc, JSON.stringify({ blocks: blocks }))
+
+        // TODO: show feedback 
+
+        closeOverlay('template-share-overlay')
+    })
+
+    document.getElementById("share-overlay-cancel").addEventListener('click', () => {
+        closeOverlay('template-share-overlay')
+    })
+
     document.getElementById("username-submit").addEventListener('click', () => {
         let username = document.getElementById('username').value
         closeOverlay('template-login-overlay')
@@ -260,7 +292,7 @@ function registerHooks() {
     })
 
     const viewButtons = document.querySelectorAll('input[name="view-radio"]');
-    for(const button of viewButtons){
+    for(const button of viewButtons) {
         button.addEventListener('change', (e) => {
             if(e.target.checked) {
                 let val = e.target.value
@@ -272,10 +304,37 @@ function registerHooks() {
         });
     } 
 
-    logseq.Editor.registerBlockContextMenuItem("Share Template", (block) => {
-        console.log(`Sharing template ${block.uuid}`)
+    logseq.Editor.registerBlockContextMenuItem("Share Template", async (block) => {
+        console.log(`Sharing block ${block.uuid}`)
+        show()
+
+        if(!logseq.settings['username']) {
+            openOverlay('template-login-overlay')
+            return 
+        }
+
+        openOverlay('template-share-overlay')
+
+        blocks = []
+        let blockEntity = await logseq.Editor.getBlock(block.uuid, { includeChildren:true })
+        buildBlocksArray(blockEntity, blocks, 0)
+
+        let blocksStr = JSON.stringify({ blocks: blocks })
+
+        // TODO: maybe no need to instantiate Card? 
+        let card = new Card()
+        let contentEl = document.getElementById('share-overlay-content')
+        contentEl.innerHTML = ''
+        card.insertTemplateContent(contentEl, blocksStr)
     })
 
+}
+
+function buildBlocksArray(block, blocks, level) {
+    blocks.push({ level: level, content: block.content })
+    block.children.forEach((child) => {
+        buildBlocksArray(child, blocks, level+1)
+    })
 }
 
 

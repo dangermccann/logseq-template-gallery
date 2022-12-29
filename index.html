@@ -13,7 +13,7 @@
 <body class="vh-100 vw-100">
 
 <div id="app" class="root hidden relative">
-  <div id="main" class="container dark-theme">
+  <div id="main" class="container dark-theme d-none">
     <div class="float-end mt-3">
       <button id="close-button" type="button" class="btn btn-outline-light">
         <span class="inline-icon x-icon"></span>
@@ -66,6 +66,30 @@
     <div class="row d-none" id="new-user">
       <h3>It looks like you're new here</h3>
       <p>Please register a user name to identify yourself in the community, and then you can begin sharing templates with others.  Once you are registered the templates you have previously shared will appear here.</p>
+    </div>
+  </div>
+
+  <!-- Share overlay -->
+  <div id="template-share-overlay" class="absolute d-none overlay">
+    <div class="container dark-theme needs-validation" novalidate>
+      <form class="card mb-4">  
+        <div class="card-body">
+          <h4 class="card-title">Share a Template in the Logseq Gallery</h4>
+        </div>
+        <span id="share-overlay-content" class="template-content">Content goes here</span>
+        <div class="card-body">
+          <div class="mb-2">
+            <input class="form-control" type="text" id="share-template-name" placeholder="Template Name" required />
+          </div>
+          <div>
+            <textarea class="form-control" id="share-template-description" placeholder="Describe what your template does..." required></textarea>
+          </div>
+        </div>
+        <div class="card-body">
+          <button id="share-overlay-share" type="submit" class="btn btn-outline-dark">Share</button>
+          <button id="share-overlay-cancel" type="button" class="btn btn-outline-dark">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 

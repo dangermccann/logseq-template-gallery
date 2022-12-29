@@ -11,6 +11,7 @@ export class Card {
         cards.appendChild(cloned)
         cloned.id = `template-${index}`
         cloned.querySelector('h5.card-title').innerText = template.Template
+        cloned.querySelector('p.template-description').innerText = template.Description
         cloned.querySelector('p.template-user').innerText = `Shared by ${template.User}`
         
         let content = cloned.querySelector('span.template-content')
