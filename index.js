@@ -16,9 +16,9 @@ function createModel() {
         async openGallery() {
             show()
 
-            refreshUsernameMessage(logseq.settings['username'])
+            refreshUsernameMessage(getUsername())
             await loadLocalTemplates()
-            await loadUserLoves(logseq.settings['username'])
+            await loadUserLoves(getUsername())
             loadRemoteTemplates('popular')
 
             // show main UI
@@ -32,6 +32,108 @@ async function main() {
     registerHooks()
 }
 
+function getUsername() {
+    return logseq.settings['username']
+}
+
+
+async function share() {
+    let tempName = document.getElementById('share-template-name').value
+    if(tempName.length === 0) {
+        return false
+    }
+
+    let tempDesc = document.getElementById('share-template-description').value
+    if(tempDesc.length === 0) {
+        return false
+    }
+
+    try {
+        await api.putTemplate(getUsername(),  tempName, tempDesc, JSON.stringify({ blocks: blocks }))
+
+        logseq.UI.showMsg('Your template was shared in the Logseq Template Gallery.  Thank you for sharing!')
+    }
+    catch(e) {
+        console.log(e)
+    }
+
+    return true
+}
+
+async function openShare(block) {
+    console.log(`Sharing block ${block.uuid}`)
+    show()
+
+    if(!getUsername()) {
+        openOverlay('template-login-overlay')
+        return 
+    }
+
+    openOverlay('template-share-overlay')
+
+    blocks = []
+    let blockEntity = await logseq.Editor.getBlock(block.uuid, { includeChildren:true })
+    buildBlocksArray(blockEntity, blocks, 0)
+
+    let blocksStr = JSON.stringify({ blocks: blocks })
+
+    // TODO: maybe no need to instantiate Card? 
+    let card = new Card()
+    let contentEl = document.getElementById('share-overlay-content')
+    contentEl.innerHTML = ''
+    card.insertTemplateContent(contentEl, blocksStr)
+
+    // clear name and description fields 
+    document.getElementById('share-template-name').value = ''
+    document.getElementById('share-template-description').value = ''
+
+    // look for template name 
+    let lines = blocks[0].content.split('\n')
+    lines.forEach(line => {
+        let parts = line.split('::')
+        if(parts[0] === 'template' && parts.length > 1) {
+            document.getElementById('share-template-name').value = parts[1]
+        }
+    })
+}
+
+function buildBlocksArray(block, blocks, level) {
+    blocks.push({ level: level, content: block.content, children: [] })
+    block.children.forEach((child) => {
+        buildBlocksArray(child, blocks[blocks.length - 1].children, level+1)
+    })
+}
+
+async function install(content) {
+    var parsed;
+    try {
+        parsed = JSON.parse(content)
+    }
+    catch(e) {
+        console.log(e) 
+        return
+    }
+
+    let batch  = []
+    parsed.blocks.forEach(block => { 
+        buildBatchBlock(block, batch)
+    })
+
+    let current = await logseq.Editor.getCurrentBlock()
+    console.log(current)
+    await logseq.Editor.insertBatchBlock(current.uuid, batch[0])
+}
+
+function buildBatchBlock(block, batch) {
+    let obj = { content: block.content, children: [] }
+    batch.push(obj)
+
+    block.children.forEach(child => {
+        buildBatchBlock(child, obj.children)
+    })
+}
+
+
 async function loadRemoteTemplates(which, filter) {
     let cardTemplate = document.getElementById('card-template')
     let cards = document.getElementById('cards')
@@ -42,14 +144,15 @@ async function loadRemoteTemplates(which, filter) {
 
     var templateJson;
     try {
-        templateJson = await api.getTemplates(which, filter)
+        if(which === 'user')
+            templateJson = await api.getUserTemplates(getUsername())
+        else
+            templateJson = await api.getTemplates(which, filter)
     }
     catch(er) {
         showError(`Failed to load data from server<br/>${er.toString()}`)
         return
     }
-    
-    //console.log(templateJson);
 
     cards.replaceChildren()
 
@@ -68,22 +171,35 @@ async function loadRemoteTemplates(which, filter) {
             openOverlay('template-preview-overlay')
         })
 
+        card.addInstallClickListener(() => {
+            install(template.Content)
+        })
+
         card.addLoveClickListener(() => {
             if(doesUserLove(template)) {
                 card.setLoved(false)
                 delete userLoves[`${template.User}\n${template.Template}`]
 
-                api.deleteUserLove(logseq.settings['username'], template.User, template.Template)
+                api.deleteUserLove(getUsername(), template.User, template.Template)
                 api.templatePopularity(template.User, template.Template, -10)
             }
             else {
                 card.setLoved(true)
                 userLoves[`${template.User}\n${template.Template}`] = true
 
-                api.putUserLove(logseq.settings['username'], template.User, template.Template)
+                api.putUserLove(getUsername(), template.User, template.Template)
                 api.templatePopularity(template.User, template.Template, 10)
             }
         })
+
+        // TODO: implement delete my template 
+        if(which === 'user') {
+
+        }
+        else {
+            
+        }
+
         index++
     })
 }
@@ -235,6 +351,11 @@ function registerHooks() {
         }
     })
 
+    document.getElementById("filter").addEventListener('change', () => {
+        // TODO: implement filtering
+        console.log("TODO: filter")
+    })
+
     document.getElementById("close-button").addEventListener('click', () => {
         closeOverlay('main')
     })
@@ -255,23 +376,11 @@ function registerHooks() {
         closeOverlay('template-login-overlay')
     })
 
-    document.getElementById("share-overlay-share").addEventListener('click', async () => {
-        let tempName = document.getElementById('share-template-name').value
-        if(tempName.length === 0) {
-            return
-        }
+    document.getElementById("share-overlay-share").addEventListener('click', async (event) => {
+        event.preventDefault()
 
-        let tempDesc = document.getElementById('share-template-description').value
-        if(tempDesc.length === 0) {
-            return
-        }
-
-        await api.putTemplate(logseq.settings['username'], 
-            tempName, tempDesc, JSON.stringify({ blocks: blocks }))
-
-        // TODO: show feedback 
-
-        closeOverlay('template-share-overlay')
+        if(await share())
+            closeOverlay('template-share-overlay')
     })
 
     document.getElementById("share-overlay-cancel").addEventListener('click', () => {
@@ -296,46 +405,22 @@ function registerHooks() {
         button.addEventListener('change', (e) => {
             if(e.target.checked) {
                 let val = e.target.value
-                if(val === 'popular' || val === 'new')
+                if(val === 'popular' || val === 'new') {
                     loadRemoteTemplates(val)
-                else
-                    console.log('TOOD: implement my templates!')
+                }
+                else {
+                    loadRemoteTemplates('user')
+                }
             }
         });
     } 
 
     logseq.Editor.registerBlockContextMenuItem("Share Template", async (block) => {
-        console.log(`Sharing block ${block.uuid}`)
-        show()
-
-        if(!logseq.settings['username']) {
-            openOverlay('template-login-overlay')
-            return 
-        }
-
-        openOverlay('template-share-overlay')
-
-        blocks = []
-        let blockEntity = await logseq.Editor.getBlock(block.uuid, { includeChildren:true })
-        buildBlocksArray(blockEntity, blocks, 0)
-
-        let blocksStr = JSON.stringify({ blocks: blocks })
-
-        // TODO: maybe no need to instantiate Card? 
-        let card = new Card()
-        let contentEl = document.getElementById('share-overlay-content')
-        contentEl.innerHTML = ''
-        card.insertTemplateContent(contentEl, blocksStr)
+        openShare(block)
     })
 
 }
 
-function buildBlocksArray(block, blocks, level) {
-    blocks.push({ level: level, content: block.content })
-    block.children.forEach((child) => {
-        buildBlocksArray(child, blocks, level+1)
-    })
-}
 
 
 function getIconPath() {

@@ -54,70 +54,77 @@ export class Card {
             parsed = JSON.parse(content)
         }
         catch(e) {
-            parsed = { "blocks": [ { "level": 0, "content": "INVALID JSON" } ] }
+            parsed = { "blocks": [ { "level": 0, "content": "INVALID JSON", "children": [] } ] }
         }
     
-        var el;
         parsed.blocks.forEach(block => {
-            let row = document.createElement('span')
-            container.appendChild(row)
-            row.classList.add('d-flex')
-            row.classList.add('flex-row')
-            row.classList.add('mb-1')
-    
-            // Insert spacers
-            for(var i = 0; i < block.level; i++) {
-                el = document.createElement('div')
-                el.classList.add('m-2')
-                row.appendChild(el)
-            }
-    
-            // Insert bullet
-            el = document.createElement('ul')
-            el.classList.add('circle')
-            el.classList.add('mb-0')
-            el.appendChild(document.createElement('li'))
+            this.renderBlock(block, container)
+        })
+    }
+
+    renderBlock(block, container) {
+        var el;
+        let row = document.createElement('span')
+        container.appendChild(row)
+        row.classList.add('d-flex')
+        row.classList.add('flex-row')
+        row.classList.add('mb-1')
+
+        // Insert spacers
+        for(var i = 0; i < block.level; i++) {
+            el = document.createElement('div')
+            el.classList.add('m-2')
             row.appendChild(el)
-    
-            // Container for lines
-            let linesEl = document.createElement('div')
-            row.appendChild(linesEl)
-    
-    
-            let lines = block.content.split('\n')
-    
-            const propRegEx = /[A-Za-z0-9]+\:\:/
-    
-            // Extract properties
-            let properties = []
-            for(var i = lines.length - 1; i >= 0; i--) {
-                if(lines[i].match(propRegEx)) {
-                    properties.push(lines[i])
-                    lines.splice(i, 1)
-                }
+        }
+
+        // Insert bullet
+        el = document.createElement('ul')
+        el.classList.add('circle')
+        el.classList.add('mb-0')
+        el.appendChild(document.createElement('li'))
+        row.appendChild(el)
+
+        // Container for lines
+        let linesEl = document.createElement('div')
+        row.appendChild(linesEl)
+
+
+        let lines = block.content.split('\n')
+
+        const propRegEx = /[A-Za-z0-9]+\:\:/
+
+        // Extract properties
+        let properties = []
+        for(var i = lines.length - 1; i >= 0; i--) {
+            if(lines[i].match(propRegEx)) {
+                properties.push(lines[i])
+                lines.splice(i, 1)
             }
-            
-            // Render first line
-            this.renderLine(linesEl, lines[0])
-            lines.splice(0, 1)
-    
-            // Render properties
-            if(properties.length > 0) {
-                let propsEl = document.createElement('div')
-                propsEl.classList.add('block-properties')
-                linesEl.appendChild(propsEl)
-                properties.forEach(prop => {
-                    let parts = prop.split("::")
-                    this.renderProperty(propsEl, parts)
-                })
-            }
-            
-    
-            // Render remaining lines
-            lines.forEach(line => {
-                this.renderLine(linesEl, line)
+        }
+        
+        // Render first line
+        this.renderLine(linesEl, lines[0])
+        lines.splice(0, 1)
+
+        // Render properties
+        if(properties.length > 0) {
+            let propsEl = document.createElement('div')
+            propsEl.classList.add('block-properties')
+            linesEl.appendChild(propsEl)
+            properties.forEach(prop => {
+                let parts = prop.split("::")
+                this.renderProperty(propsEl, parts)
             })
-            
+        }
+        
+
+        // Render remaining lines
+        lines.forEach(line => {
+            this.renderLine(linesEl, line)
+        })
+
+        block.children.forEach(child => {
+            this.renderBlock(child, container)
         })
     }
     
@@ -138,7 +145,8 @@ export class Card {
         p.classList.add('mb-0')
     
         var line = `<span class="property-name">${parts[0]}</span><span class="separator">:</span>`
-        line += this.formatLinks(parts[0])
+        if(parts.length > 1)
+            line += this.formatLinks(parts[1])
         p.innerHTML = line
     
         parent.appendChild(p)
