@@ -8,6 +8,8 @@ const api = new Api(baseUrl)
 let userLoves = {}
 let stack = []
 let blocks = []
+let tab = 'popular'
+let filter = '' 
 
 window.onload = function() {  }
 
@@ -120,8 +122,8 @@ async function install(content) {
     })
 
     let current = await logseq.Editor.getCurrentBlock()
-    console.log(current)
-    await logseq.Editor.insertBatchBlock(current.uuid, batch[0])
+    if(current)
+        await logseq.Editor.insertBatchBlock(current.uuid, batch[0])
 }
 
 function buildBatchBlock(block, batch) {
@@ -133,6 +135,14 @@ function buildBatchBlock(block, batch) {
     })
 }
 
+async function refreshMainUI() {
+    if(tab === 'popular' || tab === 'new') {
+        loadRemoteTemplates(tab, filter)
+    }
+    else {
+        loadRemoteTemplates('user')
+    }
+}
 
 async function loadRemoteTemplates(which, filter) {
     let cardTemplate = document.getElementById('card-template')
@@ -173,6 +183,8 @@ async function loadRemoteTemplates(which, filter) {
 
         card.addInstallClickListener(() => {
             install(template.Content)
+
+            api.templatePopularity(template.User, template.Template, 1)
         })
 
         card.addLoveClickListener(() => {
@@ -192,12 +204,15 @@ async function loadRemoteTemplates(which, filter) {
             }
         })
 
-        // TODO: implement delete my template 
         if(which === 'user') {
-
+            card.showDelete()
+            card.addDeleteClickListener(async() => {
+                await api.deleteTemplate(template.User, template.Template)
+                setTimeout(refreshMainUI, 250)
+            })
         }
         else {
-            
+            card.hideDelete()
         }
 
         index++
@@ -351,9 +366,11 @@ function registerHooks() {
         }
     })
 
-    document.getElementById("filter").addEventListener('change', () => {
-        // TODO: implement filtering
-        console.log("TODO: filter")
+    document.getElementById("filter").addEventListener('keyup', (e) => {
+        if(e.target.value != filter) {
+            filter = e.target.value
+            refreshMainUI()
+        }
     })
 
     document.getElementById("close-button").addEventListener('click', () => {
@@ -404,13 +421,8 @@ function registerHooks() {
     for(const button of viewButtons) {
         button.addEventListener('change', (e) => {
             if(e.target.checked) {
-                let val = e.target.value
-                if(val === 'popular' || val === 'new') {
-                    loadRemoteTemplates(val)
-                }
-                else {
-                    loadRemoteTemplates('user')
-                }
+                tab = e.target.value
+                refreshMainUI()
             }
         });
     } 

@@ -12,7 +12,7 @@ export class Api {
     
     async getTemplates(which, filter) {
         let url = `${this.baseUrl}/templates?${which}=1`
-        if(filter)
+        if(filter && filter.length > 0)
             url += `&filter=${filter}`
         let response = await fetch(url)
         return this.processResponse(response)

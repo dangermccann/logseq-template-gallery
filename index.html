@@ -29,6 +29,7 @@
     </div>
     <!--include src="./include.html"></include-->
 
+    <!-- Navigation -->
     <div class="mt-2 mb-4 row">
       <div class="btn-group me-1 col-auto" role="group">
         <input type="radio" class="btn-check btn-custom" name="view-radio" id="popular-radio"value="popular" autocomplete="off" checked>
@@ -62,6 +63,7 @@
       </div>
     </div>
 
+    <!-- Cards Container -->
     <div class="row cards" id="cards"></div>
     <div class="row d-none" id="new-user">
       <h3>It looks like you're new here</h3>
@@ -157,6 +159,10 @@
           <button id="heart-button" type="button" class="btn btn-outline-dark">
             <span class="inline-icon heart-icon"></span>
             Love
+          </button>
+          <button id="delete-button" type="button" class="btn btn-outline-dark d-none">
+            <span class="inline-icon delete-icon"></span>
+            Delete
           </button>
         </div>
       </div>

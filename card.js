@@ -33,6 +33,10 @@ export class Card {
         this.el.querySelector('#heart-button').addEventListener('click', listener)
     }
 
+    addDeleteClickListener(listener) { 
+        this.el.querySelector('#delete-button').addEventListener('click', listener)
+    }
+
     setLoved(loved) { 
         let icon = this.el.querySelector('#heart-button .inline-icon')
         if(loved) {
@@ -60,6 +64,14 @@ export class Card {
         parsed.blocks.forEach(block => {
             this.renderBlock(block, container)
         })
+    }
+
+    showDelete() {
+        this.el.querySelector('#delete-button').classList.remove('d-none')
+    }
+
+    hideDelete() {
+        this.el.querySelector('#delete-button').classList.add('d-none')
     }
 
     renderBlock(block, container) {

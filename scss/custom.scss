@@ -253,6 +253,11 @@ h4 a:hover {
     mask-image: url("../node_modules/bootstrap-icons/icons/heart-fill.svg");
 }
 
+.delete-icon {
+    -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/x-lg.svg");
+    mask-image: url("../node_modules/bootstrap-icons/icons/x-lg.svg");
+}
+
 .x-icon {
     -webkit-mask-image: url("../node_modules/bootstrap-icons/icons/x-lg.svg");
     mask-image: url("../node_modules/bootstrap-icons/icons/x-lg.svg");
