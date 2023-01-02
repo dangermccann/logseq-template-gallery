@@ -51,11 +51,11 @@
         </label>
       </div>
 
-      <div class="col-auto me-5 d-sm-none d-md-block">
+      <div class="col-auto me-1 mt-2 mt-md-0">
         <input id="filter" class="form-control" type="text" placeholder="Filter" aria-label="Filter results">
       </div>
 
-      <div class="col-auto d-sm-none d-md-block">
+      <div class="col-auto mt-2 mt-lg-0">
         <button id="share-template-button" type="button" class="btn btn-outline-primary btn-outline-light">
           <span class="inline-icon share-icon"></span>
           Share a Template
@@ -110,6 +110,35 @@
     </div>
   </div>
 
+  <!-- Share help overlay -->
+  <div id="share-help-overlay" class="absolute d-none overlay">
+    <div class="container dark-theme">
+      <div class="card mb-4">  
+        <div class="card-body">
+          <h5 class="card-title">How to Share a Template</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <ol>
+                <li>Right-click on the bullet of the block containing the template you would like to share.</li>
+                <li>From the context menu, choose Share Template.</li>
+                <li>Give the template a name and description, and then click the Share button.</li>
+                <li>That's it!  Your template will be available to all other users of the Logseq Tempalte Gallery.</li>
+              </ol>
+            </div>
+            <div class="col-3">
+              <img src="./images/share-tutorial.png" />
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <button id="share-help-close" type="button" class="btn btn-outline-dark">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- User name selection overlay -->
   <div id="template-login-overlay" class="absolute d-none overlay">
     <div class="container dark-theme">
@@ -152,15 +181,15 @@
           <p class="template-user card-text">Shared by [user name]</p>
         </div>
         <div class="card-body">
-          <button id="download-button" type="button" class="btn btn-outline-dark">
+          <button id="download-button" type="button" class="btn btn-outline-dark mb-2">
             <span class="inline-icon download-icon"></span>
             Install
           </button>
-          <button id="heart-button" type="button" class="btn btn-outline-dark">
+          <button id="heart-button" type="button" class="btn btn-outline-dark mb-2">
             <span class="inline-icon heart-icon"></span>
             Love
           </button>
-          <button id="delete-button" type="button" class="btn btn-outline-dark d-none">
+          <button id="delete-button" type="button" class="btn btn-outline-dark d-none mb-2">
             <span class="inline-icon delete-icon"></span>
             Delete
           </button>

@@ -50,6 +50,9 @@ async function share() {
         return false
     }
 
+    // Insert block property if it's not there
+
+
     try {
         await api.putTemplate(getUsername(),  tempName, tempDesc, JSON.stringify({ blocks: blocks }))
 
@@ -106,7 +109,17 @@ function buildBlocksArray(block, blocks, level) {
     })
 }
 
-async function install(content) {
+function insertBlockProperty(parsed, name) {
+    if(parsed.blocks[0].content.indexOf('tempate::') == -1) {
+        var lines = parsed.blocks[0].content.split('\n')
+        lines.splice(1, 0, `template:: ${name}`)
+        parsed.blocks[0].content = lines.join('\n')
+    }
+    
+    return parsed
+}
+
+async function install(content, name) {
     var parsed;
     try {
         parsed = JSON.parse(content)
@@ -116,14 +129,19 @@ async function install(content) {
         return
     }
 
+    parsed = insertBlockProperty(parsed, name)
+
     let batch  = []
     parsed.blocks.forEach(block => { 
         buildBatchBlock(block, batch)
     })
 
     let current = await logseq.Editor.getCurrentBlock()
-    if(current)
+    if(current) {
         await logseq.Editor.insertBatchBlock(current.uuid, batch[0])
+        return true
+    }
+    else return false
 }
 
 function buildBatchBlock(block, batch) {
@@ -182,9 +200,15 @@ async function loadRemoteTemplates(which, filter) {
         })
 
         card.addInstallClickListener(() => {
-            install(template.Content)
+            let success = install(template.Content, template.Template)
 
-            api.templatePopularity(template.User, template.Template, 1)
+            if(success) {
+                api.templatePopularity(template.User, template.Template, 1)
+                closeOverlay('main')
+            }
+            else {
+                // TODO: figure out how to handle the condition where the template couldn't be inserted?
+            }
         })
 
         card.addLoveClickListener(() => {
@@ -378,7 +402,12 @@ function registerHooks() {
     })
 
     document.getElementById("share-template-button").addEventListener('click', () => {
-        openOverlay('template-login-overlay')
+        if(getUsername()) {
+            openOverlay('share-help-overlay')
+        }
+        else {
+            openOverlay('template-login-overlay')
+        }
     })
 
     document.getElementById("username-link").addEventListener('click', () => {
@@ -402,6 +431,10 @@ function registerHooks() {
 
     document.getElementById("share-overlay-cancel").addEventListener('click', () => {
         closeOverlay('template-share-overlay')
+    })
+
+    document.getElementById("share-help-close").addEventListener('click', () => {
+        closeOverlay('share-help-overlay')
     })
 
     document.getElementById("username-submit").addEventListener('click', () => {
