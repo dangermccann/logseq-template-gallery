@@ -110,7 +110,7 @@ function buildBlocksArray(block, blocks, level) {
 }
 
 function insertBlockProperty(parsed, name) {
-    if(parsed.blocks[0].content.indexOf('tempate::') == -1) {
+    if(parsed.blocks[0].content.indexOf('template::') == -1) {
         var lines = parsed.blocks[0].content.split('\n')
         lines.splice(1, 0, `template:: ${name}`)
         parsed.blocks[0].content = lines.join('\n')
