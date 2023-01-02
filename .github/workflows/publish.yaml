@@ -27,7 +27,7 @@ jobs:
           yarn prod
           mkdir -p ${{ env.PLUGIN_NAME }}/dist
           mv dist/* ${{ env.PLUGIN_NAME }}/dist
-          mv package.json images/logo.png LICENSE ${{ env.PLUGIN_NAME }}
+          mv package.json logo.png LICENSE ${{ env.PLUGIN_NAME }}
           ls -lR ${{ env.PLUGIN_NAME }}
           zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
           tar -cvzf ${{ env.PLUGIN_NAME }}.tar.gz -C ${{ env.PLUGIN_NAME }} .
