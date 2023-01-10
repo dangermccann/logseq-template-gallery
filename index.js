@@ -3,7 +3,7 @@ import { Card } from './card'
 import { Api } from './api'
 import * as bootstrap from 'bootstrap';
 
-const baseUrl = 'http://localhost:3000'
+const baseUrl = 'https://api.logseqtemplates.com'
 const api = new Api(baseUrl)
 let userLoves = {}
 let stack = []
@@ -21,10 +21,10 @@ function createModel() {
             refreshUsernameMessage(getUsername())
             await loadLocalTemplates()
             await loadUserLoves(getUsername())
-            loadRemoteTemplates('popular')
-
             // show main UI
             openOverlay('main')
+
+            setTimeout(() => loadRemoteTemplates('popular'), 1)
         },
     }
 }
