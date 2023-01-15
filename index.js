@@ -16,15 +16,19 @@ window.onload = function() {  }
 function createModel() {
     return {
         async openGallery() {
+            clearCards()
             show()
 
             refreshUsernameMessage(getUsername())
             await loadLocalTemplates()
-            await loadUserLoves(getUsername())
+
             // show main UI
             openOverlay('main')
 
-            setTimeout(() => loadRemoteTemplates('popular'), 1)
+            setTimeout(async () => { 
+                await loadUserLoves(getUsername())
+                await loadRemoteTemplates('popular') 
+            }, 1)
         },
     }
 }
@@ -162,12 +166,16 @@ async function refreshMainUI() {
     }
 }
 
+function clearCards() {
+    let cards = document.getElementById('cards')
+    cards.replaceChildren()
+    cards.innerHTML = '<span class="text-center mb-5">Loading...</span>'
+}
+
 async function loadRemoteTemplates(which, filter) {
     let cardTemplate = document.getElementById('card-template')
     let cards = document.getElementById('cards')
-    cards.replaceChildren()
-
-    cards.innerHTML = '<span class="text-center mb-5">Loading...</span>'
+    clearCards()
 
 
     var templateJson;
