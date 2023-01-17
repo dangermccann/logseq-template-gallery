@@ -5,7 +5,7 @@ export class Api {
     }
 
     async getUserTemplates(user) {
-        let url = `${this.baseUrl}/templates?user=${user}`
+        let url = `${this.baseUrl}/templates?user=${encodeURIComponent(user)}`
         let response = await fetch(url)
         return this.processResponse(response)
     }
@@ -13,7 +13,7 @@ export class Api {
     async getTemplates(which, filter) {
         let url = `${this.baseUrl}/templates?${which}=1`
         if(filter && filter.length > 0)
-            url += `&filter=${filter}`
+            url += `&filter=${encodeURIComponent(filter)}`
         let response = await fetch(url)
         return this.processResponse(response)
     }
@@ -54,13 +54,23 @@ export class Api {
     }
 
     async deleteTemplate(user, template) {
-        let url = `${this.baseUrl}/template?user=${user}&template=${template}`
-        let response = await fetch(url, { method: 'DELETE' })
+        let url = `${this.baseUrl}/template`
+        let opts = {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "user": user,
+                "template": template
+            }) 
+        }
+        let response = await fetch(url, opts)
         return this.processResponse(response)
     }
     
     async getUserLoves(user) {
-        let url = `${this.baseUrl}/userLoves?user=${user}`
+        let url = `${this.baseUrl}/userLoves?user=${encodeURIComponent(user)}`
         let response = await fetch(url)
         return this.processResponse(response)
     }
@@ -83,8 +93,20 @@ export class Api {
     }
 
     async deleteUserLove(user, lovedUser, lovedTemplate) {
-        let url = `${this.baseUrl}/userLove?user=${user}&lovedUser=${lovedUser}&lovedTemplate=${lovedTemplate}`
-        let response = await fetch(url, { method: 'DELETE' })
+        let url = `${this.baseUrl}/userLove`        
+        let opts = {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "user": user,
+                "lovedUser": lovedUser,
+                "lovedTemplate": lovedTemplate
+            }) 
+        }
+
+        let response = await fetch(url, opts)
         return this.processResponse(response)
     }
 

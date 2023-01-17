@@ -26,7 +26,11 @@ function createModel() {
             openOverlay('main')
 
             setTimeout(async () => { 
-                await loadUserLoves(getUsername())
+                try {
+                    await loadUserLoves(getUsername())
+                } catch(e) { 
+                    console.log(e) 
+                }
                 await loadRemoteTemplates('popular') 
             }, 1)
         },
@@ -253,7 +257,7 @@ async function loadRemoteTemplates(which, filter) {
 
 async function loadUserLoves(user) {
     if(user) {
-        let loves = await api.getUserLoves()
+        let loves = await api.getUserLoves(user)
         loves.forEach((love) => {
             userLoves[love.LovedTemplate] = true
         })
