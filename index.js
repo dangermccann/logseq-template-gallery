@@ -10,6 +10,7 @@ let stack = []
 let blocks = []
 let tab = 'popular'
 let filter = '' 
+let nextOverlay = null
 
 window.onload = function() {  }
 
@@ -31,7 +32,7 @@ function createModel() {
                 } catch(e) { 
                     console.log(e) 
                 }
-                await loadRemoteTemplates('popular') 
+                await refreshMainUI()
             }, 1)
         },
     }
@@ -48,21 +49,34 @@ function getUsername() {
 
 
 async function share() {
-    let tempName = document.getElementById('share-template-name').value
-    if(tempName.length === 0) {
-        return false
+    let nameEl = document.getElementById('share-template-name')
+    let descEl = document.getElementById('share-template-description')
+    let valid = true
+
+    if(nameEl.value.length === 0) {
+        nameEl.classList.add('required')
+        valid = false
+    }
+    else {
+        nameEl.classList.remove('required')
     }
 
-    let tempDesc = document.getElementById('share-template-description').value
-    if(tempDesc.length === 0) {
-        return false
+    if(descEl.value.length === 0) {
+        descEl.classList.add('required')
+        valid = false
     }
+    else {
+        descEl.classList.remove('required')
+    }
+
+    if(!valid)
+        return false
 
     // Insert block property if it's not there
 
 
     try {
-        await api.putTemplate(getUsername(),  tempName, tempDesc, JSON.stringify({ blocks: blocks }))
+        await api.putTemplate(getUsername(),  nameEl.value, descEl.value, JSON.stringify({ blocks: blocks }))
 
         logseq.UI.showMsg('Your template was shared in the Logseq Template Gallery.  Thank you for sharing!')
     }
@@ -76,13 +90,6 @@ async function share() {
 async function openShare(block) {
     console.log(`Sharing block ${block.uuid}`)
     show()
-
-    if(!getUsername()) {
-        openOverlay('template-login-overlay')
-        return 
-    }
-
-    openOverlay('template-share-overlay')
 
     blocks = []
     let blockEntity = await logseq.Editor.getBlock(block.uuid, { includeChildren:true })
@@ -98,7 +105,9 @@ async function openShare(block) {
 
     // clear name and description fields 
     document.getElementById('share-template-name').value = ''
+    document.getElementById('share-template-name').classList.remove('required')
     document.getElementById('share-template-description').value = ''
+    document.getElementById('share-template-description').classList.remove('required')
 
     // look for template name 
     let lines = blocks[0].content.split('\n')
@@ -108,6 +117,14 @@ async function openShare(block) {
             document.getElementById('share-template-name').value = parts[1]
         }
     })
+
+    if(!getUsername()) {
+        openOverlay('template-login-overlay')
+        nextOverlay = 'template-share-overlay'
+        return 
+    }
+
+    openOverlay('template-share-overlay')
 }
 
 function buildBlocksArray(block, blocks, level) {
@@ -134,7 +151,7 @@ async function install(content, name) {
     }
     catch(e) {
         console.log(e) 
-        return
+        return false
     }
 
     parsed = insertBlockProperty(parsed, name)
@@ -145,11 +162,19 @@ async function install(content, name) {
     })
 
     let current = await logseq.Editor.getCurrentBlock()
-    if(current) {
-        await logseq.Editor.insertBatchBlock(current.uuid, batch[0])
-        return true
+    if(!current) {
+        let page = await logseq.Editor.getCurrentPage()
+        if(page) {
+            current = await logseq.Editor.appendBlockInPage(page.uuid, '')
+        }
+        else {
+            console.log("No current page to insert into!")
+            return false
+        }
     }
-    else return false
+
+    await logseq.Editor.insertBatchBlock(current.uuid, batch[0])
+    return true
 }
 
 function buildBatchBlock(block, batch) {
@@ -197,6 +222,11 @@ async function loadRemoteTemplates(which, filter) {
     cards.replaceChildren()
 
     let index = 0;
+
+    if(templateJson.length == 0) {
+        cards.innerHTML = `<span class="text-center mb-5">No templates found</span>`
+    }
+
     templateJson.forEach((template) => {
         let card = new Card(cardTemplate, cards)
         card.render(template, index)
@@ -224,6 +254,11 @@ async function loadRemoteTemplates(which, filter) {
         })
 
         card.addLoveClickListener(() => {
+            if(!getUsername()) {
+                openOverlay('template-login-overlay')
+                return
+            }
+
             if(doesUserLove(template)) {
                 card.setLoved(false)
                 delete userLoves[`${template.User}\n${template.Template}`]
@@ -357,15 +392,21 @@ function closeOverlay(id) {
     else {
         stack.pop()
     }
+
     var div = document.getElementById(id)
 
-    if(stack.length === 0) {
+    if(stack.length === 0 && !nextOverlay) {
         close(() => {
             div.classList.add("d-none")
         })
     }
     else {
         div.classList.add("d-none")
+    }
+
+    if(nextOverlay) {
+        openOverlay(nextOverlay)
+        nextOverlay = null
     }
 }
 
@@ -467,6 +508,15 @@ function registerHooks() {
         button.addEventListener('change', (e) => {
             if(e.target.checked) {
                 tab = e.target.value
+
+                let filterEl = document.getElementById('filter')
+                if(tab === 'popular' || tab === 'new') {
+                    filterEl.disabled = false
+                }
+                else {
+                    filterEl.disabled = true
+                }
+
                 refreshMainUI()
             }
         });
