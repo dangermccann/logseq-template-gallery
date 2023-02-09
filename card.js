@@ -115,7 +115,7 @@ export class Card {
         }
         
         // Render first line
-        this.renderLine(linesEl, lines[0])
+        this.renderLine(linesEl, lines[0] || '')
         lines.splice(0, 1)
 
         // Render properties
@@ -132,7 +132,7 @@ export class Card {
 
         // Render remaining lines
         lines.forEach(line => {
-            this.renderLine(linesEl, line)
+            this.renderLine(linesEl, line || '')
         })
 
         block.children.forEach(child => {
