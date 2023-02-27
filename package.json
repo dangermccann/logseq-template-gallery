@@ -11,7 +11,7 @@
         "prod": "parcel build --public-url . --no-source-maps index.html"
     },
     "devDependencies": {
-        "@logseq/libs": "^0.0.9",
+        "@logseq/libs": "^0.0.14",
         "@parcel/transformer-sass": "^2.8.0",
         "parcel": "^2.0.0"
     },
